@@ -132,6 +132,7 @@ export const getAllPairValues = async (pools, volumes, allTokens) => {
 };
 
 export const getAllPairsData = async (tokensUsdPrice, allTokens, allPairs, _pools) => {
+  
   const pools = _pools ? _pools : await getPairList(allPairs);
   if (pools.length) {
     const dexscanPoolsStats = await getAnalyticsDexscanPoolsData();

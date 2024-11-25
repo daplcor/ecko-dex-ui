@@ -36,47 +36,61 @@ const TVLChart = ({ kdaPrice, height }) => {
   const [currentTVL, setCurrentTVL] = useState(null);
   const [currentDate, setCurrentDate] = useState(null);
   const [tvlRange, setTvlRange] = useState(TVL_3M_RANGE.value);
-
   const [tvlData, setTVLData] = useState([]);
 
   useEffect(() => {
-    const groupedTvl = getGroupedTVL(
-      tvlRanges[tvlRange]?.dateStart ?? moment().subtract(90, 'days').format('YYYY-MM-DD'),
-      moment().format('YYYY-MM-DD')
-    );
-    const candles = axios.get(
-      `${process.env.REACT_APP_KADDEX_STATS_API_URL}/candles?currency=USDT&asset=KDA&dateStart=${
-        tvlRanges[tvlRange]?.dateStart ?? moment().subtract(60, 'days').format('YYYY-MM-DD')
-      }&dateEnd=${moment().subtract(1, 'days').format('YYYY-MM-DD')}`
-    );
-    Promise.all([groupedTvl, candles])
-      .then(async (res) => {
-        const allTVL = [];
-        for (const day of res[0].data) {
-          let kdaVerifiedPrice = getDailyKdaPrice(day, res[1]?.data) || kdaPrice;
+  const groupedTvl = getGroupedTVL(
+    tvlRanges[tvlRange]?.dateStart ?? moment().subtract(90, 'days').format('YYYY-MM-DD'),
+    moment().format('YYYY-MM-DD')
+  );
+  
+  const candles = axios.get(
+    `${process.env.REACT_APP_KADDEX_STATS_API_URL}/candles?currency=USDT&asset=KDA&dateStart=${
+      tvlRanges[tvlRange]?.dateStart ?? moment().subtract(60, 'days').format('YYYY-MM-DD')
+    }&dateEnd=${moment().subtract(1, 'days').format('YYYY-MM-DD')}`
+  );
 
+  Promise.all([groupedTvl, candles])
+    .then(async (res) => {
+      const allTVL = [];
+
+      for (const day of res[0].data) {
+        let kdaVerifiedPrice = getDailyKdaPrice(day, res[1]?.data) || kdaPrice;
+
+        const tvlValue = day.tvl.reduce((partialSum, currVol) => {
+          if (currVol.tokenFrom === 'coin') {
+            const tokenToPrice = (currVol.tokenFromTVL / currVol.tokenToTVL) * kdaVerifiedPrice;
+            return partialSum + currVol.tokenFromTVL * kdaVerifiedPrice + currVol.tokenToTVL * tokenToPrice;
+          } else {
+            const tokenFromPrice = (currVol.tokenToTVL / currVol.tokenFromTVL) * kdaVerifiedPrice;
+            return partialSum + currVol.tokenFromTVL * tokenFromPrice + currVol.tokenToTVL * kdaVerifiedPrice;
+          }
+        }, 0);
+
+        // Push only if the calculated TVL is a valid number to avoid NaN displaying
+        if (!isNaN(tvlValue)) {
           allTVL.push({
             name: moment(day._id).format('DD/MM/YYYY'),
-            tvl: +day.tvl
-              .reduce((partialSum, currVol) => {
-                if (currVol.tokenFrom === 'coin') {
-                  const tokenToPrice = (currVol.tokenFromTVL / currVol.tokenToTVL) * kdaVerifiedPrice;
-                  return partialSum + currVol.tokenFromTVL * kdaVerifiedPrice + currVol.tokenToTVL * tokenToPrice;
-                } else {
-                  const tokenFromPrice = (currVol.tokenToTVL / currVol.tokenFromTVL) * kdaVerifiedPrice;
-                  return partialSum + currVol.tokenFromTVL * tokenFromPrice + currVol.tokenToTVL * kdaVerifiedPrice;
-                }
-              }, 0)
-              .toFixed(2),
+            tvl: parseFloat(tvlValue.toFixed(2)),
             kdaVerifiedPrice,
           });
         }
+      }
+
+      // If no valid TVL data is found, handle it gracefully
+      if (allTVL.length > 0) {
         setTVLData(allTVL);
         setCurrentTVL(allTVL[allTVL.length - 1].tvl);
         setViewedTVL(allTVL[allTVL.length - 1].tvl);
-      })
-      .catch((err) => console.log('get tvl error', err));
-  }, [kdaPrice, tvlRange]);
+      } else {
+        console.warn('No valid TVL data available');
+        setCurrentTVL(0);
+        setViewedTVL(0);
+      }
+    })
+    .catch((err) => console.error('get tvl error', err));
+}, [kdaPrice, tvlRange]);
+
 
   const getDailyKdaPrice = (day, candles) => {
     const id = day?._id;

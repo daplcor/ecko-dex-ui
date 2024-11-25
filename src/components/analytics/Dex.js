@@ -8,16 +8,13 @@ import { usePactContext } from '../../contexts';
 import { humanReadableNumber, extractDecimal, reduceBalance } from '../../utils/reduceBalance';
 import TVLChart from '../charts/TVLChart';
 import VolumeChart from '../charts/VolumeChart';
-import AnalyticsSimpleWidget from '../shared/AnalyticsSimpleWidget';
 import CustomDropdown from '../shared/CustomDropdown';
 import { FlexContainer } from '../shared/FlexContainer';
-import ProgressBar from '../shared/ProgressBar';
 import StackedBarChart from '../shared/StackedBarChart';
 import AppLoader from '../shared/AppLoader';
 import { isMainnet } from '../../constants/contextConstants';
 import { samplePairsVolume, sampleTokensVolume } from './devnetSampleVolumes';
-import Label from '../shared/Label';
-import { SKDXIcon } from '../../assets';
+
 
 /* const KDX_TOTAL_SUPPLY = 1000000000; */
 
@@ -84,7 +81,6 @@ const Dex = ({ kdaPrice, kdxSupply, poolState }) => {
   };
 
   const getPairsVolume = async () => {
-    console.log('localPairList');
     axios
       .get(
         `${process.env.REACT_APP_KADDEX_STATS_API_URL}/volume/daily?dateStart=${chartTimeRanges[volumeRange].dateStartTvl}&dateEnd=${moment()
@@ -95,7 +91,6 @@ const Dex = ({ kdaPrice, kdxSupply, poolState }) => {
         const kdaPrice = tokensUsdPrice?.coin;
         let allVolumes = [];
         const allTokenPairs = localPairList;
-        console.log('allTokenPairs', allTokenPairs);
         const findTokenPair = (vol) =>
           allTokenPairs.find(
             (m) => m.name === `coin:${vol.tokenFromNamespace}.${vol.tokenFromName}` || m.name === `coin:${vol.tokenToNamespace}.${vol.tokenToName}`

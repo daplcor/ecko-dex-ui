@@ -68,10 +68,26 @@ export const getCorrectBalance = (balance) => {
   return balanceClean;
 };
 
-export const humanReadableNumber = (num, toFixed = 2) =>
-  extractDecimal(num)
-    ?.toFixed(toFixed)
-    ?.replace(/\B(?=(\d{3})+(?!\d))/g, ',') ?? '';
+// export const humanReadableNumber = (num, toFixed = 2) =>
+//   extractDecimal(num)
+//     ?.toFixed(toFixed)
+//     ?.replace(/\B(?=(\d{3})+(?!\d))/g, ',') ?? '';
+
+export const from_pact_decimal =  v => v?.decimal ? Number(v.decimal) : v
+
+export const humanReadableNumber = (num, toFixed = 2) => {
+ const extracted = extractDecimal(num);
+
+  if (typeof extracted !== 'number' || isNaN(extracted)) {
+    console.warn(`Invalid extracted number: ${extracted}, from input: ${num}`);
+    return ''; 
+  }
+
+  return extracted
+    .toFixed(toFixed)
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+};
+
 
 export const countDecimals = (value) => {
   if (Math.floor(value) === value) return 0;

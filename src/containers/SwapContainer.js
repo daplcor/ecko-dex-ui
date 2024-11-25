@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import styled, { css } from 'styled-components/macro';
 import { throttle, debounce } from 'throttle-debounce';
 import useWindowSize from '../hooks/useWindowSize';
@@ -110,6 +110,57 @@ const SwapContainer = () => {
   const { gameEditionView, openModal, closeModal, outsideToken } = useGameEditionContext();
   const [tokenSelectorType, setTokenSelectorType] = useState(null);
   const [selectedToken, setSelectedToken] = useState(null);
+
+  const initialRender = useRef(true);
+
+
+
+  const initialTokens = useRef({
+    token0: query.get('token0'),
+    token1: query.get('token1')
+  });
+
+  useEffect(() => {
+    if (!pact.allTokens) {
+      console.log("Waiting for tokens to load...");
+      return;
+    }
+      
+    const fromToken = initialTokens.current.token0 
+      ? Object.values(pact.allTokens).find(t => 
+          t.name.toLowerCase() === initialTokens.current.token0.toLowerCase() ||
+          t.code.toLowerCase() === initialTokens.current.token0.toLowerCase()
+        )
+      : null;
+  
+    const toToken = initialTokens.current.token1
+      ? Object.values(pact.allTokens).find(t => 
+          t.name.toLowerCase() === initialTokens.current.token1.toLowerCase() ||
+          t.code.toLowerCase() === initialTokens.current.token1.toLowerCase()
+        )
+      : null;
+    
+    // Only update if we found matching tokens
+    if (fromToken) {
+      setFromValues(prev => ({
+        ...prev,
+        coin: fromToken.name,
+        address: fromToken.code,
+        precision: fromToken.precision
+      }));
+    }
+  
+    if (toToken) {
+      setToValues(prev => ({
+        ...prev,
+        coin: toToken.name,
+        address: toToken.code,
+        precision: toToken.precision
+      }));
+    }
+  
+  }, [pact.allTokens])
+
   const [fromValues, setFromValues] = useState({
     amount: '',
     balance: '',
@@ -266,9 +317,19 @@ const SwapContainer = () => {
   }, [fromValues.amount, toValues.amount, pact.ratio]);
 
   useEffect(() => {
-    history.push(ROUTE_SWAP.concat(`?token0=${fromValues.coin}&token1=${toValues.coin}`));
+    if (initialRender.current) {
+      initialRender.current = false;
+      return;
+    }
+  
+    // Only update URL if both tokens are different from initial values
+    const currentToken0 = query.get('token0');
+    const currentToken1 = query.get('token1');
+    
+    if (fromValues.coin !== currentToken0 || toValues.coin !== currentToken1) {
+      history.push(ROUTE_SWAP.concat(`?token0=${fromValues.coin}&token1=${toValues.coin}`));
+    }
   }, [fromValues.coin, toValues.coin]);
-
 
   useEffect(() => {
     setBalanceLoading(true);

@@ -144,20 +144,7 @@ const LiquidityContainer = () => {
 
           <FlexContainer gap={16} mobilePixel={530}>
             
-            <CustomButton
-              fontSize={13}
-              buttonStyle={{ height: 33 }}
-              type="basic"
-              /*  color={commonColors.pink} */
-              onClick={() => history.push(ROUTE_LIQUIDITY_REWARDS)}
-            >
-              <ButtonContent active={pathname === ROUTE_LIQUIDITY_REWARDS} color={commonColors.pink}>
-                <BoosterIcon />
-                <Label fontFamily="syncopate" color={commonColors.pink} labelStyle={{ marginTop: 1 }}>
-                  REWARDS
-                </Label>
-              </ButtonContent>
-            </CustomButton>
+      
             <CustomButton
               fontSize={13}
               buttonStyle={{ height: 33 }}

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import moment from 'moment';
 import {customPactFetchLocal} from './pact';
+import {from_pact_decimal} from '../utils/reduceBalance';
 
 export const getAnalyticsKdaUsdPrice = async () => {
   const kdaPrice = await axios.get(
@@ -39,7 +40,7 @@ export const getCoingeckoUsdPrice = async (tokenName) => {
     }
 
     if (result?.value != null) {
-      return result.value;
+      return from_pact_decimal(result.value);
     } else {
       throw new Error("Invalid or missing value in the result");
     }
